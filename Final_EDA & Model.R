@@ -19,7 +19,7 @@ library(randomForest)
 #******************** Load csv file and checking structure of data *************
 Incidents_service <- read_excel(file.choose()) # Import the original Client data
 View(Incidents_service)
-dim(Incidents_service)  
+dim(Incidents_service)  #141712     25
 summary(Incidents_service)
 str(Incidents_service)
 # char varaible : 16
@@ -36,7 +36,6 @@ rapply(Incidents_service, function(x) length(unique(x)))
 #------------------------------------------------------------------------------#
 
 #Graphical Representation of incident state with count
-attach(Incidents_service)
 ggplot(data = Incidents_service, aes(x = ID_status, 
                                      y = stat(count), 
                                      fill = ID_status, 
@@ -143,7 +142,7 @@ Incidents_service$`change request`<-gsub("?",NA,Incidents_service$`change reques
 #------------------------------------------------------------------------------#
 
 #Checking NA Values
-sum(is.na(Incidents_service)) 
+sum(is.na(Incidents_service)) #280138
 sapply(Incidents_service,function(x) sum(is.na(x)))
 #------------------------------------------------------------------------------#
 
@@ -219,14 +218,11 @@ Incidents_service$support_incharge <- substr(Incidents_service$support_incharge,
 Incidents_service$support_incharge <- as.numeric(Incidents_service$support_incharge)
 
 #-----------------------------------------------------------------
-#################### Corelation #####################
-library(ggcorrplot)
-model.matrix(~0+., data=Incidents_service) %>% 
-  cor(use="pairwise.complete.obs") %>% 
-  ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=2)
+####################### Corelation ####################
+library(GoodmanKruskal) # not applicable to numeric
+gkmatrix <- GKtauDataframe(Incidents_service)
+plot(gkmatrix,diagSize = 1)
 
-
-#-----------------------------------------------------------------
 ####################### Model Building ####################
 # Data Partitioning
 set.seed(123)
@@ -234,10 +230,10 @@ ind <- sample(2,nrow(Incidents_service), replace = TRUE, prob = c(0.7,0.3))
 train <- Incidents_service[ind==1,]
 test <- Incidents_service[ind==2,]
 
-table(test$impact)
-prop.table(table(test$impact))*100
-
 # Random Forest Model
+memory.size()
+memory.limit(400000)
+
 set.seed(999)
 rf <- randomForest(impact~.,data = train, importance=TRUE)
 print(rf) # mtree=500, ntry=4, OOB error rate=1.71%
@@ -300,13 +296,13 @@ train_top5_up <- upSample(x=train_top5[,],y=train_top5$impact)
 train_top5_up <- train_top5_up[,-7]
 
 table(train_top5_up$impact)
-prop.table(table(train_top5_up$impact))
-dim(train_top5_up)
 # 1 - High 2 - Medium    3 - Low 
 #   94008      94008      94008 
 #----------------------------------------------------------------------
 ##### Random Forest Model (Train without Upsample Data)
+memory.size()
 memory.limit(500000)
+
 set.seed(999)
 rf2 <- randomForest(impact~.,data = train_top5)
 print(rf2) # ntee=500, mtry=2, OOB error rate=0.93%
@@ -347,13 +343,13 @@ plot(rf_up) # 200
 # Tune mtry
 train_top5_up <- as.data.frame(train_top5_up)
 t1 <- tuneRF(train_top5_up[,-6], train_top5_up[,6], stepFactor = 0.5, plot = TRUE, 
-            ntreeTry = 200, trace = TRUE, improve = 0.05)
+             ntreeTry = 200, trace = TRUE, improve = 0.05)
 t1 # 4
 
 # Fine Tune RF Model
 set.seed(555)
 rf_up_1 <- randomForest(impact~.,data = train_top5_up, ntree=200, mtry= 4,
-                    importance= TRUE)
+                        importance= TRUE)
 print(rf_up_1) # ntree=200, mtry=4, OOB error rate=0.92%
 
 # Prediction & Confusion Matrix - Train Data
@@ -368,8 +364,8 @@ confusionMatrix(p22, test_top5$impact)
 # Sensitivity        0.98378            0.9933        0.97804
 
 # -------------------------------------------------------------------
-save(rf_up_1,file = "E:/Milind/Data Science/Project_Incident Prediction/Final Submission/Revised/rf_up_1.R")
-write.csv(train_top5_up,file ="E:/Milind/Data Science/Project_Incident Prediction/Final Submission/Revised/train_top5_up.csv",row.names = FALSE)
-write.csv(test_top5,file ="E:/Milind/Data Science/Project_Incident Prediction/Final Submission/Revised/test_top5.csv",row.names = FALSE)
+save(rf_up_1,file = "rf_up_1.R")
+write.csv(train_top5_up,file ="train_top5_up.csv",row.names = FALSE)
+write.csv(test_top5,file ="test_top5.csv",row.names = FALSE)
 
 ################################ END ##############################################
