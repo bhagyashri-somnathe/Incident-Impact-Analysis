@@ -8,7 +8,7 @@ library(dplyr)
 library(tableHTML)
 
 #----------------------------------------------------------------------------------------------
-Test_10 <- read.csv("D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/test_top5.csv")
+Test_10 <- read.csv("file path for test_top5.csv")
 
 #----------------------------------------------------------------------------------------------
 #************************* Define UI for app **************************************
@@ -149,7 +149,7 @@ server <- function(input, output) {
     output$modelSummary <- renderPrint({
         req(input$file1)
         df <- read.csv(input$file1$datapath)
-        model <- load(file = "D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/rf_up_1.R")
+        model <- load(file = "rf_up_1.R")
         pred_data <- df[,1:6]
         data1 <- data.frame(pred_data[,1:5],impact =pred_data[,6],Predicted = predict(get(model),pred_data[,1:6]))
         print(data1)
@@ -189,24 +189,24 @@ server <- function(input, output) {
                                      user_symptom = as.numeric(input$user_symptom))
                      
                      frames <- data.frame(frames)
-                     model <- load(file = "D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/rf_up_1.R")
+                     model <- load(file = "file path for rf_up_1.R")
                      dt <- as.character(predict(get(model),frames))
                      output$predvalue <- renderText({dt})
                      
                      output$img <- renderImage({
                          
                          if(dt == "1 - High"){
-                             list(src ="D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/high.jpg",
+                             list(src ="file path for high.jpg",
                                   width = 250,height = 150)
                          } 
                          
                          else if(dt == "2 - Medium"){
-                             list(src ="D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/medium.jpg",
+                             list(src ="file path for medium.jpg",
                                   width = 250,height = 150)
                          }
                          
                          else {
-                             list(src ="D:/DataScience-26th Feb/Projects/Incident_Prediction/Final Project/low.jpg",
+                             list(src ="file path for low.jpg",
                                   width = 250,height = 150)
                          }
                      },deleteFile = FALSE)
